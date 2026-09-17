@@ -1,4 +1,4 @@
-import Hero from "@/pages/Hero";
+import Hero from "@/sections/Hero";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -12,21 +12,21 @@ export default function Home() {
             alt="Logo"
             width={80}
             height={80}
-          />
+          /> 
 
           <div className="font-lora flex flex-col">
-            <h1 className="text-4xl">Livroteca</h1>
+            <h1 className="text-4xl">Livroteria</h1>
             <p className="">O livro certo para o seu momento</p>
           </div>
         </div>
 
         <nav className="flex gap-4">
           <Link
-            href=""
+            href="/pilha-de-livros"
             className="hover:scale-110 duration-300"
           >
             <Image
-              src="/images/header/pilha-de-livros.png"
+              src="/images/header/bookshelf.png"
               alt="Pilha de Livros"
               width={50}
               height={50}
@@ -47,7 +47,7 @@ export default function Home() {
         </nav>
       </header>
 
-      <main className="mt-12 px-15">
+      <main className="mt-12">
         <Hero/>
       </main>
     </>

@@ -51,7 +51,7 @@ export function MoodSelector() {
             <div
               className={`relative flex h-20 w-20 items-center justify-center rounded-full border-2 transition-all duration-300 ${
                 isSelected
-                  ? "border-[#2E5A36] bg-[#1E3A23] shadow-[0_0_15px_rgba(46,90,54,0.6)]"
+                  ? "border-greenColor bg-greenColor shadow-[0_0_15px_rgba(46,90,54,0.6)]"
                   : "border-cream/30 bg-[#1A1813] hover:border-cream/60"
               }`}
             >

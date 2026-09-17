@@ -3,11 +3,13 @@
 :root {
   --darkColor: #141301;
   --lightColor: #E3E7AF;
+  --greenColor: #2A5F27;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-darkColor: var(--darkColor);
+  --color-lightColor: var(--lightColor);
+  --color-greenColor: var(--greenColor);
   --font-lora: var(--font-lora);
   --font-poppins: var(--font-poppins);
 }
@@ -15,5 +17,9 @@
 body {
   background: var(--darkColor);
   color: var(--lightColor);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-poppins);
+}
+
+main {
+  padding: 0 60px;
 }
