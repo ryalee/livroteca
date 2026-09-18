@@ -75,7 +75,7 @@ export default function Hero() {
           </div>
         </div>
 
-        <div className="flex flex-col items-center mt-10 gap-10 mx-auto">
+        <div className="flex flex-col items-center mt-6 gap-10 mx-auto">
           <div className="flex gap-10 justify-center">
             <div className="flex flex-col items-center max-w-80">
               <button
@@ -95,10 +95,22 @@ export default function Hero() {
                 Buscar próxima história
               </button>
 
-              <p className="text-xs mt-3 text-center opacity-75">
-                Recomendação aleatória baseada na sua personalidade e no seu
-                humor de hoje
-              </p>
+              <div className="flex flex-col items-center text-center opacity-75">
+                <p className="text-xs mt-3 text-center">
+                  Recomendação aleatória baseada na sua personalidade e no seu
+                  humor de hoje.
+                </p>
+
+                <p className="text-xs mt-1 flex items-center gap-1">
+                  Veja sua personalidade em
+                  <Image
+                    src="/images/header/profile.png"
+                    alt="pilha de livros"
+                    width={30}
+                    height={30}
+                  />
+                </p>
+              </div>
             </div>
 
             <div className="flex flex-col items-center max-w-80">
@@ -121,10 +133,17 @@ export default function Hero() {
 
               <div className="flex flex-col items-center text-center opacity-75">
                 <p className="text-xs mt-3">
-                  "Sorteio" entre os livros que você já tem.
+                  "Sorteio" entre os livros que você já tem na sua estante física ou kindle.
                 </p>
+
                 <p className="text-xs mt-1 flex items-center gap-1">
-                  Veja seus livros em <Image src="/images/header/bookshelf.png" alt="pilha de livros" width={30} height={30} />
+                  Veja seus livros em
+                  <Image
+                    src="/images/header/bookshelf.png"
+                    alt="pilha de livros"
+                    width={30}
+                    height={30}
+                  />
                 </p>
               </div>
             </div>
