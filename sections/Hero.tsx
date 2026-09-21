@@ -1,43 +1,70 @@
 "use client";
 
-import { MoodSelector } from "@/components/MoodSeletor";
+import { useState } from "react";
 import Image from "next/image";
-import React, { useState } from "react";
+import { MoodSelector } from "@/components/MoodSeletor";
+import RecommendationModal from "@/components/RecommendationModal";
+import SlotMachineLoader from "@/components/SlotMachineLoader";
+import { getRecommendedBooks } from "@/lib/recommendationEngine";
+import { getProfile } from "@/lib/storage";
+import { GoogleBookItem } from "@/lib/googleBooks";
 
-function getGreeting() {
-  const hour = new Date().getHours();
-
-  if (hour >= 5 && hour < 12) {
-    return "Bom dia";
-  }
-  if (hour >= 12 && hour < 18) {
-    return "Boa tarde";
-  }
-
-  return "Boa noite";
+interface HeroProps {
+  userName?: string;
 }
 
-export default function Hero() {
-  const greeting = getGreeting();
-
+export default function Hero({ userName = "Leitor" }: HeroProps) {
   const [format, setFormat] = useState<"all" | "kindle">("all");
-  const [searchMode, setSearchMode] = useState<"general" | "bookshelf">(
-    "general",
-  );
+  const [selectedMoodId, setSelectedMoodId] = useState<string>("apaixonadin");
+  
+  const [recommendedBook, setRecommendedBook] = useState<GoogleBookItem | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+
+  const handleRecommend = async () => {
+    const profile = getProfile();
+    if (!profile) return;
+
+    // 1. Ativa a roleta de carregamento
+    setIsLoading(true);
+
+    try {
+      // Pequeno delay intencional (ex: 2.5 segundos) para a animação do cassino rodar na tela
+      const [results] = await Promise.all([
+        getRecommendedBooks({
+          moodId: selectedMoodId,
+          profile,
+          format,
+        }),
+        new Promise((resolve) => setTimeout(resolve, 2500)),
+      ]);
+
+      if (results.length > 0) {
+        setRecommendedBook(results[0]);
+        setIsModalOpen(true);
+      } else {
+        alert("Nenhum livro encontrado com esses critérios no momento. Tente outro humor!");
+      }
+    } catch (err) {
+      console.error("Erro na busca de recomendação:", err);
+    } finally {
+      // 2. Desativa a roleta
+      setIsLoading(false);
+    }
+  };
 
   return (
     <section>
       <div>
-        <h2 className="font-lora text-6xl">{greeting}, Ryan!</h2>
+        <h2 className="font-lora text-6xl">Olá, {userName}!</h2>
         <p className="font-lora text-xl">Como está se sentindo hoje?</p>
       </div>
 
       <div className="mt-10">
-        <MoodSelector />
+        <MoodSelector onSelectMood={(moodId) => setSelectedMoodId(moodId)} />
 
         <div className="flex flex-col items-center mt-6">
           <p className="text-sm opacity-80">Formato</p>
-
           <div className="flex gap-6 mt-2">
             <button
               onClick={() => setFormat("all")}
@@ -47,13 +74,8 @@ export default function Hero() {
                   : "border-cream/40 hover:bg-lightColor/20"
               }`}
             >
-              <Image
-                src="/images/hero/open-book.png"
-                alt="livro aberto"
-                width={24}
-                height={24}
-              />
-              todos
+              <Image src="/images/hero/open-book.png" alt="livro" width={24} height={24} />
+              Todos
             </button>
 
             <button
@@ -64,92 +86,55 @@ export default function Hero() {
                   : "border-cream/40 hover:bg-lightColor/20"
               }`}
             >
-              <Image
-                src="/images/hero/kindle.png"
-                alt="kindle"
-                width={24}
-                height={24}
-              />
+              <Image src="/images/hero/kindle.png" alt="kindle" width={24} height={24} />
               Apenas Kindle
             </button>
           </div>
         </div>
 
-        <div className="flex flex-col items-center mt-6 gap-10 mx-auto">
-          <div className="flex gap-10 justify-center">
+        <div className="flex flex-col items-center mt-8 gap-10 mx-auto">
+          <div className="flex gap-10 justify-center flex-wrap">
+            
             <div className="flex flex-col items-center max-w-80">
               <button
-                onClick={() => setSearchMode("general")}
-                className={`flex w-full items-center gap-2 justify-center border-2 px-6 py-3 rounded-full font-bold duration-300 cursor-pointer ${
-                  searchMode === "general"
-                    ? "bg-greenColor border-greenColor text-white shadow-[0px_0px_15px_rgba(87,194,81,0.6)] scale-105"
-                    : "border-cream/40 hover:border-greenColor/60"
-                }`}
+                onClick={handleRecommend}
+                disabled={isLoading}
+                className="flex w-full items-center gap-2 justify-center border-2 border-greenColor bg-greenColor text-white shadow-[0px_0px_15px_rgba(87,194,81,0.6)] px-6 py-3 rounded-full font-bold duration-300 cursor-pointer hover:scale-105 disabled:opacity-50"
               >
-                <Image
-                  src="/images/hero/dice.png"
-                  alt="dado"
-                  width={32}
-                  height={32}
-                />
+                <Image src="/images/hero/dice.png" alt="dado" width={32} height={32} />
                 Buscar próxima história
               </button>
-
-              <div className="flex flex-col items-center text-center opacity-75">
-                <p className="text-xs mt-3 text-center">
-                  Recomendação aleatória baseada na sua personalidade e no seu
-                  humor de hoje.
-                </p>
-
-                <p className="text-xs mt-1 flex items-center gap-1">
-                  Veja sua personalidade em
-                  <Image
-                    src="/images/header/profile.png"
-                    alt="pilha de livros"
-                    width={30}
-                    height={30}
-                  />
-                </p>
-              </div>
+              <p className="text-xs mt-3 text-center opacity-75">
+                Recomendação baseada na sua personalidade e no seu humor.
+              </p>
             </div>
 
             <div className="flex flex-col items-center max-w-80">
               <button
-                onClick={() => setSearchMode("bookshelf")}
-                className={`flex w-full items-center gap-2 justify-center border-2 px-6 py-3 rounded-full font-bold duration-300 cursor-pointer ${
-                  searchMode === "bookshelf"
-                    ? "bg-greenColor border-greenColor text-white shadow-[0px_0px_15px_rgba(87,194,81,0.6)] scale-105"
-                    : "border-cream/40 hover:border-greenColor/60"
-                }`}
+                className="flex w-full items-center gap-2 justify-center border-2 border-cream/40 hover:border-greenColor/60 px-6 py-3 rounded-full font-bold duration-300 cursor-pointer"
               >
-                <Image
-                  src="/images/hero/books.png"
-                  alt="livros"
-                  width={32}
-                  height={32}
-                />
+                <Image src="/images/hero/books.png" alt="livros" width={32} height={32} />
                 Buscar da minha estante
               </button>
-
-              <div className="flex flex-col items-center text-center opacity-75">
-                <p className="text-xs mt-3">
-                  "Sorteio" entre os livros que você já tem na sua estante física ou kindle.
-                </p>
-
-                <p className="text-xs mt-1 flex items-center gap-1">
-                  Veja seus livros em
-                  <Image
-                    src="/images/header/bookshelf.png"
-                    alt="pilha de livros"
-                    width={30}
-                    height={30}
-                  />
-                </p>
-              </div>
+              <p className="text-xs mt-3 text-center opacity-75">
+                Sorteio entre os livros cadastrados na sua pilha.
+              </p>
             </div>
+
           </div>
         </div>
       </div>
+
+      {/* Modal Roleta de Carregamento */}
+      <SlotMachineLoader isOpen={isLoading} />
+
+      {/* Modal do Resultado */}
+      <RecommendationModal
+        book={recommendedBook}
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onReshuffle={handleRecommend}
+      />
     </section>
   );
 }

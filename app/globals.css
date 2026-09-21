@@ -23,3 +23,7 @@ body {
 main {
   padding: 0 60px;
 }
+
+button {
+  cursor: pointer;
+}

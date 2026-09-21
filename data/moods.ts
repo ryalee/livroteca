@@ -28,7 +28,7 @@ export const moods: Mood[] = [
   },
   {
     id: "daquele-jeitao",
-    name: "Daquele Jeitão",
+    name: "Daquele Jeito",
     icon: "/images/hero/pimenta.png",
     apiQuery: "subject:erotic-romance",
     tags: ["romance-hot", "hot", "enemies-to-lovers", "dark-romance"],
