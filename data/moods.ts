@@ -9,8 +9,8 @@ export type Mood = {
 
 export const moods: Mood[] = [
   {
-    id: "apaixonadin",
-    name: "Apaixonadin",
+    id: "apaixonado",
+    name: "Apaixonado",
     icon: "/images/hero/love.png",
     apiQuery: "subject:romance",
     tags: ["romance", "romance-leve", "comedia-romantica", "cozy-romance"],

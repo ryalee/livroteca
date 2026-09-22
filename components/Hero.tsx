@@ -8,6 +8,7 @@ import SlotMachineLoader from "@/components/SlotMachineLoader";
 import { getRecommendedBooks } from "@/lib/recommendationEngine";
 import { getProfile } from "@/lib/storage";
 import { GoogleBookItem } from "@/lib/googleBooks";
+import { useBookStack } from "@/context/BookStackContext";
 
 interface HeroProps {
   userName?: string;
@@ -16,46 +17,73 @@ interface HeroProps {
 export default function Hero({ userName = "Leitor" }: HeroProps) {
   const [format, setFormat] = useState<"all" | "kindle">("all");
   const [selectedMoodId, setSelectedMoodId] = useState<string>("apaixonadin");
-  
+
   const [recommendedBook, setRecommendedBook] = useState<GoogleBookItem | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
-  const handleRecommend = async () => {
-    const profile = getProfile();
-    if (!profile) return;
+  // Acessa a pilha de livros para o sorteio local
+  const { stack } = useBookStack();
 
-    // 1. Ativa a roleta de carregamento
+  // 1. Recomendação Geral (Google Books + Algoritmo)
+  const handleRecommend = async () => {
+    // Tenta pegar o perfil do storage; se não existir, cria um genérico para não travar
+    const profile = getProfile() || {
+      favoriteGenres: ["Ficção"],
+      readingPace: "medium",
+    };
+
     setIsLoading(true);
 
     try {
-      // Pequeno delay intencional (ex: 2.5 segundos) para a animação do cassino rodar na tela
       const [results] = await Promise.all([
         getRecommendedBooks({
           moodId: selectedMoodId,
           profile,
           format,
         }),
-        new Promise((resolve) => setTimeout(resolve, 2500)),
+        new Promise((resolve) => setTimeout(resolve, 2500)), // Delay da roleta
       ]);
 
-      if (results.length > 0) {
-        setRecommendedBook(results[0]);
+      if (results && results.length > 0) {
+        // Escolhe um livro aleatório entre os recomendados
+        const randomIndex = Math.floor(Math.random() * results.length);
+        setRecommendedBook(results[randomIndex]);
         setIsModalOpen(true);
       } else {
-        alert("Nenhum livro encontrado com esses critérios no momento. Tente outro humor!");
+        alert("Nenhum livro encontrado para esse humor. Tente outro humor ou ajuste seus gêneros!");
       }
     } catch (err) {
       console.error("Erro na busca de recomendação:", err);
+      alert("Ocorreu um erro ao buscar recomendações. Tente novamente!");
     } finally {
-      // 2. Desativa a roleta
       setIsLoading(false);
     }
   };
 
+  // 2. Recomendação da Pilha/Estante do Usuário
+  const handleRecommendFromStack = async () => {
+    if (stack.length === 0) {
+      alert("Sua pilha de livros está vazia! Adicione alguns livros na sua pilha primeiro.");
+      return;
+    }
+
+    setIsLoading(true);
+
+    // Simula a roleta rodando por 2 segundos
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+
+    const randomIndex = Math.floor(Math.random() * stack.length);
+    const chosenBook = stack[randomIndex];
+
+    setRecommendedBook(chosenBook);
+    setIsLoading(false);
+    setIsModalOpen(true);
+  };
+
   return (
     <section>
-      <div>
+      <div className="flex flex-col gap-2">
         <h2 className="font-lora text-6xl">Olá, {userName}!</h2>
         <p className="font-lora text-xl">Como está se sentindo hoje?</p>
       </div>
@@ -95,11 +123,12 @@ export default function Hero({ userName = "Leitor" }: HeroProps) {
         <div className="flex flex-col items-center mt-8 gap-10 mx-auto">
           <div className="flex gap-10 justify-center flex-wrap">
             
+            {/* Botão 1: Buscar Nova História */}
             <div className="flex flex-col items-center max-w-80">
               <button
                 onClick={handleRecommend}
                 disabled={isLoading}
-                className="flex w-full items-center gap-2 justify-center border-2 border-greenColor bg-greenColor text-white shadow-[0px_0px_15px_rgba(87,194,81,0.6)] px-6 py-3 rounded-full font-bold duration-300 cursor-pointer hover:scale-105 disabled:opacity-50"
+                className="flex w-full items-center gap-2 justify-center border-2 border-greenColor bg-greenColor text-white shadow-[0px_0px_15px_rgba(87,194,81,0.6)] px-6 py-3 rounded-full font-bold duration-300 cursor-pointer hover:scale-105 disabled:opacity-50 text-sm"
               >
                 <Image src="/images/hero/dice.png" alt="dado" width={32} height={32} />
                 Buscar próxima história
@@ -109,12 +138,15 @@ export default function Hero({ userName = "Leitor" }: HeroProps) {
               </p>
             </div>
 
+            {/* Botão 2: Buscar da Minha Estante */}
             <div className="flex flex-col items-center max-w-80">
               <button
-                className="flex w-full items-center gap-2 justify-center border-2 border-cream/40 hover:border-greenColor/60 px-6 py-3 rounded-full font-bold duration-300 cursor-pointer"
+                onClick={handleRecommendFromStack}
+                disabled={isLoading}
+                className="flex w-full items-center gap-2 justify-center border-2 border-cream/40 hover:border-greenColor/60 px-6 py-3 rounded-full font-bold duration-300 cursor-pointer disabled:opacity-50 text-sm"
               >
                 <Image src="/images/hero/books.png" alt="livros" width={32} height={32} />
-                Buscar da minha estante
+                Buscar da minha estante ({stack.length})
               </button>
               <p className="text-xs mt-3 text-center opacity-75">
                 Sorteio entre os livros cadastrados na sua pilha.
@@ -133,7 +165,6 @@ export default function Hero({ userName = "Leitor" }: HeroProps) {
         book={recommendedBook}
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        onReshuffle={handleRecommend}
       />
     </section>
   );

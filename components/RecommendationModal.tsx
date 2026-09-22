@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { GoogleBookItem } from "@/lib/googleBooks";
 import { useState } from "react";
+import { useBookStack } from "@/context/BookStackContext";
 
 type RecommendationModalProps = {
   book:
@@ -28,11 +29,19 @@ export default function RecommendationModal({
   onClose,
   onMarkAsRead,
 }: RecommendationModalProps) {
-  const [lido, setLido] = useState(false);
+  const { addBookToStack, isBookInStack } = useBookStack();
 
-  if (!isOpen || !book) return null;
+  const inStack = book ? isBookInStack(book.id) : false;
 
-  // Cálculo estimado de tempo de leitura
+  // injeta a flag source: "wishlist" ao adicionar na pilha
+  const handleAddToStack = () => {
+    if (!book) return;
+    addBookToStack({
+      ...book,
+      source: "wishlist",
+    });
+  };
+
   const calculateReadingHours = (pages: number) => {
     if (!pages) return null;
     const multiplier =
@@ -41,13 +50,7 @@ export default function RecommendationModal({
     return hours < 1 ? "menos de 1h" : `~${hours}h`;
   };
 
-  const handleToggleLido = () => {
-    const nextState = !lido;
-    setLido(nextState);
-    if (onMarkAsRead) {
-      onMarkAsRead(book, nextState);
-    }
-  };
+  if (!isOpen || !book) return null;
 
   const readingTime = calculateReadingHours(book.pageCount);
   const amazonUrl = `https://www.amazon.com.br/s?k=${encodeURIComponent(
@@ -86,6 +89,7 @@ export default function RecommendationModal({
                     src={book.coverUrl}
                     alt={book.title}
                     fill
+                    unoptimized
                     className="object-cover"
                   />
                 ) : (
@@ -146,27 +150,28 @@ export default function RecommendationModal({
 
           {/* Painel Lateral de Ações e Links */}
           <div className="w-full md:w-80 flex flex-col gap-4 self-center">
-            {/* Botão Já Li com imagem dinâmica */}
+            {/* Botão Adicionar à Pilha */}
             <button
-              onClick={handleToggleLido}
-              className={`w-full py-3 px-4 rounded-full font-bold text-sm transition-all duration-300 border flex items-center justify-center gap-2 ${
-                lido
-                  ? "bg-pink-950/40 border-pink-500/60 text-pink-200 shadow-[0_0_15px_rgba(236,72,153,0.2)]"
+              onClick={handleAddToStack}
+              disabled={inStack}
+              className={`w-full py-3 px-4 rounded-full font-bold text-sm transition-all duration-300 border flex items-center justify-center gap-2 cursor-pointer ${
+                inStack
+                  ? "bg-emerald-950/40 border-emerald-500/60 text-emerald-200 cursor-not-allowed shadow-[0_0_15px_rgba(16,185,129,0.2)]"
                   : "bg-black/30 hover:bg-black/50 border-amber-200/40 hover:border-amber-200 text-amber-100"
               }`}
             >
               <Image
-                src={
-                  lido
-                    ? "/images/result/heart-full.png"
-                    : "/images/result/heart.png"
-                }
-                alt={lido ? "Lido" : "Marcar como lido"}
+                src="/images/pilha/bookmark.png"
+                alt="Adicionar à pilha"
                 width={20}
                 height={20}
                 className="object-contain"
               />
-              <span>{lido ? "lido!" : "marcar como lido"}</span>
+              <span>
+                {inStack
+                  ? "na sua pilha de leitura"
+                  : "adicionar à minha pilha"}
+              </span>
             </button>
 
             {/* Botão Amazon */}
@@ -174,10 +179,10 @@ export default function RecommendationModal({
               href={amazonUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="w-full py-3 px-4 rounded-full bg-[#c68a16] hover:bg-[#b07910] text-black font-bold text-center text-sm shadow-md transition flex items-center justify-center gap-2"
+              className="w-full py-3 px-4 rounded-full bg-lightColor hover:bg-lightColor/90 text-black font-bold text-center text-sm shadow-md transition flex items-center justify-center gap-2"
             >
               <Image
-                src="/images/result/amazon.png"
+                src="/images/result/amazon-logo.png"
                 alt="Ver na Amazon"
                 width={40}
                 height={40}

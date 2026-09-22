@@ -4,7 +4,8 @@ import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { searchBooks, GoogleBookItem } from "@/lib/googleBooks";
-import { moods } from "@/data/moods"; // Importe o seu array oficial de humores
+import { moods } from "@/data/moods";
+import { useBookStack } from "@/context/BookStackContext";
 
 type AddBookModalProps = {
   onClose: () => void;
@@ -20,6 +21,9 @@ export default function AddBookModal({
   const [searchResults, setSearchResults] = useState<GoogleBookItem[]>([]);
   const [selectedBook, setSelectedBook] = useState<GoogleBookItem | null>(null);
   const [selectedMoodId, setSelectedMoodId] = useState<string>("apaixonadin");
+
+  // Injeta o método de adicionar livro diretamente do Contexto Global
+  const { addBookToStack } = useBookStack();
 
   // Handles the search on Google Books API
   const handleSearch = useCallback(
@@ -37,33 +41,21 @@ export default function AddBookModal({
     [searchTerm],
   );
 
-  // Saves the selected book with its mood tag to localStorage
+  // Salva o livro diretamente no BookStackContext marcando como "owned"
   const handleSaveToBookshelf = () => {
     if (!selectedBook) return;
 
-    const newBook = {
+    addBookToStack({
       ...selectedBook,
       moodId: selectedMoodId,
+      source: "owned", // <--- Marca que o livro é da Estante/Kindle do usuário
       addedAt: new Date().toISOString(),
-    };
-
-    // Lê os livros que já existem salvos
-    const existing = JSON.parse(
-      localStorage.getItem("@livroteca:bookshelf") || "[]",
-    );
-
-    // Evita duplicados pelo ID do livro
-    const updated = [
-      newBook,
-      ...existing.filter((b: any) => b.id !== selectedBook.id),
-    ];
-
-    localStorage.setItem("@livroteca:bookshelf", JSON.stringify(updated));
+    });
 
     if (onBookAdded) onBookAdded();
     onClose();
   };
-  
+
   return (
     <AnimatePresence>
       <motion.div
@@ -83,7 +75,7 @@ export default function AddBookModal({
         >
           <button
             onClick={onClose}
-            className="absolute top-3 right-4 text-gray-400 hover:text-white text-3xl"
+            className="absolute top-3 right-4 text-gray-400 hover:text-white text-3xl cursor-pointer"
             aria-label="Fechar modal"
           >
             &times;
@@ -111,7 +103,7 @@ export default function AddBookModal({
             <button
               type="submit"
               disabled={isSearching}
-              className="bg-greenColor hover:bg-greenColor/90 text-white font-bold text-sm px-5 py-2 rounded-xl transition disabled:opacity-50"
+              className="bg-greenColor hover:bg-greenColor/90 text-white font-bold text-sm px-5 py-2 rounded-xl transition disabled:opacity-50 cursor-pointer"
             >
               {isSearching ? "Buscando..." : "Buscar"}
             </button>
@@ -134,6 +126,7 @@ export default function AddBookModal({
                         src={book.coverUrl}
                         alt={book.title}
                         fill
+                        unoptimized
                         className="object-cover"
                       />
                     ) : (
@@ -155,7 +148,7 @@ export default function AddBookModal({
             </div>
           )}
 
-          {/* config do livro selecionado */}
+          {/* Configuração do livro selecionado */}
           {selectedBook && (
             <div className="bg-black/30 p-4 rounded-xl mb-6 border border-greenColor/40">
               <div className="flex gap-4 items-center mb-4">
@@ -165,6 +158,7 @@ export default function AddBookModal({
                       src={selectedBook.coverUrl}
                       alt={selectedBook.title}
                       fill
+                      unoptimized
                       className="object-cover"
                     />
                   )}
@@ -178,14 +172,14 @@ export default function AddBookModal({
                   </p>
                   <button
                     onClick={() => setSelectedBook(null)}
-                    className="text-xs text-greenColor underline mt-2"
+                    className="text-xs text-greenColor underline mt-2 cursor-pointer"
                   >
                     Trocar livro
                   </button>
                 </div>
               </div>
 
-              {/* seletor do humor/vibe pro livro */}
+              {/* Seletor do humor/vibe do livro */}
               <div>
                 <label className="block text-xs font-semibold mb-2 opacity-90">
                   Qual a vibe desse livro para quando for sortear?
@@ -193,7 +187,7 @@ export default function AddBookModal({
                 <select
                   value={selectedMoodId}
                   onChange={(e) => setSelectedMoodId(e.target.value)}
-                  className="w-full bg-black/50 border border-cream/30 text-white text-sm rounded-lg p-2.5 outline-none focus:border-greenColor"
+                  className="w-full bg-black/50 border border-cream/30 text-white text-sm rounded-lg p-2.5 outline-none focus:border-greenColor cursor-pointer"
                 >
                   {moods.map((m) => (
                     <option
@@ -212,7 +206,7 @@ export default function AddBookModal({
           {selectedBook && (
             <button
               onClick={handleSaveToBookshelf}
-              className="w-full bg-greenColor hover:bg-greenColor/90 text-white font-bold py-3 rounded-xl transition shadow-[0_0_15px_rgba(87,194,81,0.4)]"
+              className="w-full bg-greenColor hover:bg-greenColor/90 text-white font-bold py-3 rounded-xl transition shadow-[0_0_15px_rgba(87,194,81,0.4)] cursor-pointer"
             >
               Salvar na Minha Estante
             </button>

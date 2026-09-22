@@ -1,86 +1,56 @@
-import { GoogleBookItem, searchBooks } from "./googleBooks";
-import { UserProfile } from "./storage";
+import { searchBooks, GoogleBookItem } from "./googleBooks";
 
-const MOOD_QUERY_MAP: Record<string, string[]> = {
-  apaixonadin: [
-    "bestseller romance",
-    "romance pop",
-    "colleen hoover",
-    "ali hazelwood",
-    "comédia romântica sucesso",
-    "comédia romântica",
-  ],
-  "cansado-da-realidade": [
-    "fantasia bestseller",
-    "ficção científica sucesso",
-    "livros pop fantasia",
-    "sarah j maas",
-    "fantasia épica moderna",
-  ],
-  muahahaha: [
-    "thriller bestseller",
-    "suspense psicologico sucesso",
-    "fiona barton",
-    "thriller policial pop",
-  ],
-  introspectivo: [
-    "romance contemporâneo premiado",
-    "literatura contemporânea sucesso",
-    "matt haig",
-    "ficção moderna",
-  ],
-  "cerebro-frito": [
-    "quadrinhos sucesso",
-    "graphic novel bestseller",
-    "leitura leve pop",
-  ],
-  melancolico: [
-    "drama contemporâneo bestseller",
-    "romance emocionante sucesso",
-  ],
+// Mapeamento simplificado de humores para termos abrangentes de busca
+const MOOD_KEYWORDS: Record<string, string[]> = {
+  apaixonadin: ["romance", "amor", "paixão", "relacionamento"],
+  reflexivo: ["filosofia", "desenvolvimento pessoal", "psicologia", "ensaios"],
+  misterioso: ["suspense", "thriller", "mistério", "investigação"],
+  aventura: ["fantasia", "aventura", "ficção científica", "epopeia"],
+  leve: ["humor", "comédia", "crônicas", "fábula"],
+  sombrio: ["terror", "gótico", "horror", "dark fantasy"],
 };
-
-interface SearchOptions {
-  moodId: string;
-  profile: UserProfile;
-  format?: "all" | "kindle";
-}
 
 export async function getRecommendedBooks({
   moodId,
   profile,
-}: SearchOptions): Promise<GoogleBookItem[]> {
-  const terms = MOOD_QUERY_MAP[moodId] || ["fiction"];
+  format,
+}: {
+  moodId: string;
+  profile?: any;
+  format?: string;
+}): Promise<GoogleBookItem[]> {
+  // 1. Extrai o gênero preferido (se houver) e palavras-chave do humor
+  const favoriteGenre = profile?.favoriteGenres?.[0] || "";
+  const moodKeywords = MOOD_KEYWORDS[moodId] || ["ficção"];
+  const randomMoodKeyword =
+    moodKeywords[Math.floor(Math.random() * moodKeywords.length)];
 
-  // pega um termo de humor da lista
-  const randomMoodTerm = terms[Math.floor(Math.random() * terms.length)];
+  // Tentativa 1: Busca combinando Gênero + Palavra-chave do Humor
+  if (favoriteGenre) {
+    const query = `${favoriteGenre} ${randomMoodKeyword}`;
+    const results = await searchBooks(query);
+    if (results.length > 0) return results;
+  }
 
-  // sorteia um genero dos favoritos do usuário (se tiver)
-  const userGenre =
-    profile.favoriteGenres.length > 0
-      ? profile.favoriteGenres[
-          Math.floor(Math.random() * profile.favoriteGenres.length)
-        ]
-      : "";
+  // Tentativa 2 (Fallback 1): Busca apenas pela Palavra-chave do Humor
+  const moodResults = await searchBooks(randomMoodKeyword);
+  if (moodResults.length > 0) return moodResults;
 
-  // monta uma query dinamica (ex: "enemies to lovers subject:Fantasy")
-  const searchQuery = userGenre
-    ? `${randomMoodTerm} subject:"${userGenre}"`
-    : randomMoodTerm;
+  // Tentativa 3 (Fallback 2): Busca apenas pelo Gênero Favorito
+  if (favoriteGenre) {
+    const genreResults = await searchBooks(favoriteGenre);
+    if (genreResults.length > 0) return genreResults;
+  }
 
-  // busca livros com busca paginada e ordenação aleatória
-  const rawBooks = await searchBooks(searchQuery, 20);
-
-  // filtra elementos a evitar salvos no onboarding
-  const filteredBooks = rawBooks.filter((book) => {
-    const textToAnalyze =
-      `${book.title} ${book.description || ""}`.toLowerCase();
-
-    return !profile.avoidTropes.some((trope) =>
-      textToAnalyze.includes(trope.toLowerCase()),
-    );
-  });
-
-  // embaralha os resultados filtrados
-  return filteredBooks.sort(() => 0.5 - Math.random());
+  // Tentativa 4 (Fallback Final Garantido): Busca um termo amplo aleatório
+  const fallbackTerms = [
+    "romance",
+    "ficção",
+    "suspense",
+    "fantasia",
+    "história",
+  ];
+  const randomTerm =
+    fallbackTerms[Math.floor(Math.random() * fallbackTerms.length)];
+  return await searchBooks(randomTerm);
 }

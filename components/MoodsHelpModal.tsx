@@ -11,8 +11,8 @@ type MoodsHelpModalProps = {
 // Mapeamento dos humores e suas explicações
 const MOOD_EXPLANATIONS = [
   {
-    id: "apaixonadin",
-    title: "Apaixonadin",
+    id: "apaixonado",
+    title: "Apaixonado",
     icon: "/images/hero/love.png",
     description: "Romances aquecedores de coração, comédias românticas, 'enemies to lovers' e histórias para suspirar.",
   },
@@ -90,9 +90,9 @@ export default function MoodsHelpModal({ isOpen, onClose }: MoodsHelpModalProps)
               {MOOD_EXPLANATIONS.map((mood) => (
                 <div
                   key={mood.id}
-                  className="p-3.5 rounded-xl bg-black/30 border border-amber-100/5 hover:border-amber-500/20 transition-all flex gap-3.5 items-start"
+                  className="p-3.5 rounded-xl bg-black/30 border border-amber-100/5 hover:border-amber-500/20 transition-all flex gap-3.5 items-center"
                 >
-                  <span className="text-2xl shrink-0 p-1 bg-amber-950/40 rounded-lg border border-amber-500/10">
+                  <span className="text-2xl shrink-0 p-2 rounded-full border">
                   <Image
                     src={mood.icon}
                     alt={mood.title}

@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
-
 import { Lora, Poppins } from "next/font/google";
-
 import "./globals.css";
+import { BookStackProvider } from "@/context/BookStackContext";
 
 const lora = Lora({
   variable: "--font-lora",
@@ -29,7 +28,9 @@ export default function RootLayout({
       className={`${lora.variable} ${poppins.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        {children}
+        <BookStackProvider>
+          {children}
+        </BookStackProvider>
       </body>
     </html>
   );

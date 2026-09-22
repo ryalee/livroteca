@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getProfile } from "@/lib/storage";
-import Hero from "@/sections/Hero";
+import Hero from "@/components/Hero";
 import Image from "next/image";
 import Link from "next/link";
 

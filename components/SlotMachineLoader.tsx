@@ -13,7 +13,6 @@ export default function SlotMachineLoader({ isOpen }: SlotMachineLoaderProps) {
   const [covers, setCovers] = useState<string[]>([]);
   const [isLoadingCovers, setIsLoadingCovers] = useState<boolean>(true);
 
-  // Busca capas de livros reais na API sempre que o modal abre
   useEffect(() => {
     if (!isOpen) return;
 
@@ -22,7 +21,6 @@ export default function SlotMachineLoader({ isOpen }: SlotMachineLoaderProps) {
 
     async function fetchLibraryCovers() {
       try {
-        // Busca uma amostra diversa de livros para popular o carrossel
         const randomQueries = [
           "bestsellers",
           "ficcao",
@@ -35,7 +33,6 @@ export default function SlotMachineLoader({ isOpen }: SlotMachineLoaderProps) {
 
         const books: GoogleBookItem[] = await searchBooks(randomQuery, 15);
 
-        // Filtra apenas livros que possuem capas válidas
         const validCovers = books
           .map((b) => b.coverUrl)
           .filter((url): url is string => Boolean(url));
@@ -59,52 +56,63 @@ export default function SlotMachineLoader({ isOpen }: SlotMachineLoaderProps) {
 
   if (!isOpen) return null;
 
-  // Duplicamos as capas para criar a ilusão de rolagem infinita contínua
   const displayCovers = [...covers, ...covers, ...covers];
+  // Cada card tem 144px de altura + 16px de gap = 160px
+  const itemStep = 160;
 
   return (
     <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex flex-col items-center justify-center p-4">
-      <div className="bg-[#1a120c] p-8 rounded-2xl border border-amber-900/40 shadow-2xl flex flex-col items-center text-center max-w-sm w-full">
-        <span className="text-xs uppercase tracking-widest text-amber-400 font-bold mb-4 animate-pulse flex items-center gap-2">
-          <span>🎰</span> Vasculhando a biblioteca...
-        </span>
+      <div className="bg-[#1a120c] p-8 rounded-3xl border border-amber-900/40 shadow-[0_0_50px_rgba(0,0,0,0.8)] flex flex-col items-center text-center max-w-sm w-full relative">
+        
+        {/* Cabeçalho */}
+        <div className="flex items-center gap-2 mb-6">
+          <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
+          <span className="text-xs uppercase tracking-widest text-amber-300/90 font-semibold">
+            Vasculhando a biblioteca...
+          </span>
+        </div>
 
-        {/* Caixilho do Cassino / Roleta */}
-        <div className="relative w-44 h-64 bg-black/60 rounded-xl border-2 border-amber-500/50 overflow-hidden shadow-[0_0_30px_rgba(217,119,6,0.25)]">
-          {/* Sombras interna superior/inferior para efeito 3D/profundidade */}
-          <div className="absolute inset-x-0 top-0 h-10 bg-linear-to-b from-black to-transparent z-20 pointer-events-none" />
-          <div className="absolute inset-x-0 bottom-0 h-10 bg-linear-to-t from-black to-transparent z-20 pointer-events-none" />
+        {/* Moldura da Slot Machine */}
+        <div className="relative w-48 h-72 bg-black/70 rounded-2xl border-2 border-amber-500/40 overflow-hidden shadow-[0_0_35px_rgba(217,119,6,0.2)]">
+          
+          {/* Sombras interna superior e inferior (Suaviza a entrada e saída dos livros) */}
+          <div className="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-black via-black/80 to-transparent z-20 pointer-events-none" />
+          <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black via-black/80 to-transparent z-20 pointer-events-none" />
 
-          {/* Mira / Linha de seleção central */}
-          <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-36 bg-amber-500/10 z-10 border-y border-amber-500/40 pointer-events-none" />
+          {/* Mira / Linha de seleção central estilo Roleta */}
+          <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-40 bg-amber-500/10 z-10 border-y-2 border-amber-400/50 pointer-events-none shadow-[0_0_15px_rgba(245,158,11,0.15)] flex justify-between items-center px-1">
+            <div className="w-1 h-5 rounded-full bg-amber-400 shadow-[0_0_8px_#f59e0b]" />
+            <div className="w-1 h-5 rounded-full bg-amber-400 shadow-[0_0_8px_#f59e0b]" />
+          </div>
 
-          {/* Estado de carregamento rápido até buscar as capas */}
+          {/* Estado Carregando */}
           {isLoadingCovers || covers.length === 0 ? (
             <div className="w-full h-full flex flex-col items-center justify-center text-amber-200/60 text-xs animate-pulse p-4">
               Acessando estantes...
             </div>
           ) : (
-            /* Rolagem das Capas */
+            /* Trilha dos Livros Rolando */
             <motion.div
               className="flex flex-col items-center gap-4 py-4"
               animate={{
-                y: [0, -(covers.length * 150)],
+                y: [0, -(covers.length * itemStep)],
               }}
               transition={{
                 repeat: Infinity,
-                duration: Math.max(covers.length * 0.25, 2),
+                duration: Math.max(covers.length * 0.3, 3),
                 ease: "linear",
               }}
             >
               {displayCovers.map((coverUrl, index) => (
                 <div
                   key={index}
-                  className="w-28 h-40 relative bg-neutral-900 rounded-lg overflow-hidden border border-amber-100/10 shrink-0 shadow-md"
+                  className="w-28 h-36 relative bg-neutral-900 rounded-lg overflow-hidden border border-amber-200/20 shrink-0 shadow-lg"
                 >
                   <Image
                     src={coverUrl}
-                    alt="Capa de livro da biblioteca"
+                    alt="Capa de livro"
                     fill
+                    unoptimized
                     className="object-cover"
                     sizes="112px"
                   />
@@ -114,6 +122,7 @@ export default function SlotMachineLoader({ isOpen }: SlotMachineLoaderProps) {
           )}
         </div>
 
+        {/* Rodapé */}
         <p className="text-xs text-amber-100/70 mt-6 font-lora italic">
           Analisando títulos, autores e seu humor atual...
         </p>
