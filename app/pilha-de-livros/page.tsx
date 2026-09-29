@@ -124,12 +124,12 @@ export default function Page() {
               width={30}
               height={30}
             />
-            Minha Estante / Kindle
+            Minha Estante Pessoal
             <span className="bg-stone-950/30 px-2 py-0.5 rounded-full text-xs">
               {ownedCount}
             </span>
           </button>
-
+            
           <button
             onClick={() => setActiveTab("wishlist")}
             className={`px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-300 cursor-pointer flex items-center gap-2 ${

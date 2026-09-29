@@ -122,7 +122,6 @@ export default function SlotMachineLoader({ isOpen }: SlotMachineLoaderProps) {
           )}
         </div>
 
-        {/* Rodapé */}
         <p className="text-xs text-amber-100/70 mt-6 font-lora italic">
           Analisando títulos, autores e seu humor atual...
         </p>
